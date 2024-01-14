@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual Closet</title>
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  .switch-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+  }
+  .switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  input:checked + .slider {
+    background-color: #2196F3;
+  }
+  input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+  }
+  input:checked + .slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+  }
+  .slider.round {
+    border-radius: 34px;
+  }
+  .slider.round:before {
+    border-radius: 50%;
+  }
+  .closet-box, .outfit-box {
+    border: 1px solid #dee2e6;
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+  .outfit-image {
+    width: 100%;
+    height: auto;
+    margin-top: 10px;
+    display: block;
+  }
+
+  .closet-box {
+  /* ... other styles ... */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start; /* Aligns items to the start of the container */
+  align-items: flex-start; /* Aligns items to the start of the cross axis */
+}
+
+.closet-image {
+  flex: 0 0 25%; /* Do not grow or shrink, start off at 32% of the container width */
+  max-width: 25%; /* Maximum width is also 32% */
+  height: auto; /* Keep the aspect ratio */
+  margin: 1%; /* Add a small margin for spacing */
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.outfit-box p {
+  display: none; /* Hide text by default */
+  text-align: center;
+  margin-top: 10px; /* Adjust as needed */
+}
+
+.outfit-box.empty p {
+  display: block; /* Show text when the box is empty */
+}
+
+.outfit-box {
+  border: 1px solid #dee2e6;
+  padding: 10px;
+  margin-bottom: 15px;
+  height: 200px; /* Fixed height */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.outfit-image {
+  max-width: 100%;
+  max-height: 150px; /* Adjust this to leave some space for the text below */
+  object-fit: contain;
+}
+
+/* Optional: You can apply a min-height to the image to take up space even when there's no image */
+.outfit-image {
+  min-height: 150px; /* This should match the max-height or be a bit less */
+}
+
+
+.text-placeholder {
+  display: none; /* Hide by default */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+}
+
+/* Show the placeholder when image is not displayed */
+.outfit-box .outfit-image.d-none + .text-placeholder {
+  display: block;
+}
+
+/* Bootstrap 4 uses d-none class to hide elements */
+.d-none {
+  display: none !important;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border-left-color: #09f;
+  animation: spin 1s ease infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+
+
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="switch-container">
+    <label>Use default clothing</label>
+    <label class="switch">
+      <input type="checkbox" id="uploadToggle" onclick="toggleUpload(this.checked)">
+      <span class="slider round"></span>
+    </label>
+    <label>Upload your own clothing</label>
+  </div>
+
+  <div id="uploadSection" class="hidden">
+    <input type="file" id="imageUpload" class="form-control-file">
+    <button onclick="uploadImage()">Upload</button>
+    <!-- Placeholder for image upload functionality -->
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div id="closet">
+        <!-- Dynamically populate this section with user-uploaded images -->
+        <div class="closet-box">Top</div>
+        <div class="closet-box">Bottom</div>
+        <div class="closet-box">Shoes</div>
+        <div class="closet-box">Accessory</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <input type="text" id="outfitRequest" class="form-control" placeholder="What kind of outfit do you want?">
+      <button class="btn btn-primary" onclick="submitOutfitRequest()">Submit</button>
+      <div id="loadingIndicator" class="spinner" style="display: none;"></div>
+      <div id="outfitResults" class="row">
+        <div class="col-md-6 outfit-box" id="outfit-top-box">
+          <img id="outfit-top" class="outfit-image d-none" alt="Top">
+          <div class="text-placeholder">Top</div>
+        </div>
+        <div class="col-md-6 outfit-box" id="outfit-bottom-box">
+          <img id="outfit-bottom" class="outfit-image d-none" alt="Bottom">
+          <div class="text-placeholder">Bottom</div>
+        </div>
+        <div class="col-md-6 outfit-box" id="outfit-shoes-box">
+          <img id="outfit-shoes" class="outfit-image d-none" alt="Shoes">
+          <div class="text-placeholder">Shoes</div>
+        </div>
+        <div class="col-md-6 outfit-box" id="outfit-accessory-box">
+          <img id="outfit-accessory" class="outfit-image d-none" alt="Accessory">
+          <div class="text-placeholder">Accessory</div>
+        </div>
+      </div>
+      
+      
+    
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
+<script>
+  // JavaScript functions to handle toggling, image upload, and form submission
+// Assuming you have a predefined list of default images
+// JavaScript function to handle toggling
+function toggleUpload(checked) {
+  const uploadSection = document.getElementById('uploadSection');
+  const closet = document.getElementById('closet');
+  uploadSection.style.display = checked ? 'block' : 'none';
+  
+  // Clear current images
+  closet.querySelectorAll('.closet-box img').forEach(img => img.remove());
+  
+  // If default is selected, add the default images
+  if (!checked) {
+    addDefaultImages();
+  }
+}
+
+function addDefaultImages() {
+  const defaultImages = {
+    top: ['top_1.jpeg', 'top_2.jpeg', 'top_3.jpeg'],
+    bottom: ['bottom_1.jpeg', 'bottom_2.jpeg', 'bottom_3.jpeg'],
+    shoes: ['shoe_1.jpeg', 'shoe_2.jpeg', 'shoe_3.jpeg'],
+    accessory: ['accessory_1.jpeg', 'accessory_2.jpeg', 'accessory_3.jpeg']
+  };
+
+  Object.entries(defaultImages).forEach(([type, images]) => {
+    const box = Array.from(document.getElementsByClassName('closet-box'))
+      .find(el => el.textContent.trim().toLowerCase().includes(type));
+
+    images.forEach(image => {
+      const img = document.createElement('img');
+      img.src = `/static/default_closet/${image}`;
+      img.classList.add('closet-image');
+      box.appendChild(img); // Append image directly to the box
+    });
+  });
+}
+
+
+
+// Call addDefaultImages on page load to populate images initially
+document.addEventListener('DOMContentLoaded', function() {
+  toggleUpload(document.getElementById('uploadToggle').checked);
+});
+
+// Add jQuery contains selector method to match text
+$.expr[':'].contains = $.expr.createPseudo(function(arg) {
+    return function( elem ) {
+        return $(elem).text().toUpperCase().indexOf(arg.toUpperCase()) >= 0;
+    };
+});
+
+function submitOutfitRequest() {
+    const description = document.getElementById('outfitRequest').value;
+    const useDefault = !document.getElementById('uploadToggle').checked;
+    const data = new FormData();
+    data.append('description', description);
+    data.append('useDefault', useDefault);
+
+    document.getElementById('loadingIndicator').style.display = 'block';
+
+    fetch('/get-outfit', {
+        method: 'POST',
+        body: data
+    }).then(response => response.json())
+      .then(data => {
+        document.getElementById('loadingIndicator').style.display = 'none';
+          // Update the outfit images or show placeholder text
+          updateOutfitImage('outfit-top', data.top);
+          updateOutfitImage('outfit-bottom', data.bottom);
+          updateOutfitImage('outfit-shoes', data.shoes);
+          updateOutfitImage('outfit-accessory', data.accessory);
+      }).catch(error => {
+        document.getElementById('loadingIndicator').style.display = 'none';
+          console.error('Error:', error);
+      });
+}
+
+
+  function uploadImage() {
+    const input = document.getElementById('imageUpload');
+    if (input.files.length > 0) {
+        const formData = new FormData();
+        formData.append('file', input.files[0]);
+
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        }).then(response => response.json())
+          .then(data => {
+              if(data.extracted_image_url && data.type) {
+                  // Update the UI with the extracted image in the correct 'closet' container
+                  // Find the closet box that contains the type in its text content
+                  const box = Array.from(document.getElementsByClassName('closet-box'))
+                    .find(el => el.textContent.trim().toLowerCase().includes(data.type));
+                  if (box) {
+                      const img = document.createElement('img');
+                      img.src = data.extracted_image_url; // Use the URL returned from the server
+                      img.classList.add('closet-image');
+                      box.appendChild(img); // Append image to the box
+                  }
+              }
+          }).catch(error => {
+              console.error('Error:', error);
+          });
+    }
+}
+
+function updateOutfitImage(elementId, imageUrl) {
+  const imageElement = document.getElementById(elementId);
+  const placeholderElement = imageElement.nextElementSibling; // The placeholder div
+  if (imageUrl) {
+    imageElement.src = imageUrl;
+    imageElement.classList.remove('d-none');
+    placeholderElement.style.display = 'none';
+  } else {
+    imageElement.classList.add('d-none');
+    placeholderElement.style.display = 'block';
+  }
+}
+
+
+
+
+</script>
+
+</body>
+</html>

@@ -1,3 +1,5 @@
+#credit to https://huggingface.co/Salesforce/blip-image-captioning-large
+
 import requests
 from PIL import Image
 from transformers import BlipProcessor, BlipForConditionalGeneration
@@ -76,6 +78,8 @@ def indo_data():
                 data.append([image, label])
                 print(label)
                 print(f"{count}/{total}")
+            if count > 1600:
+                break
 
         with open('indo_image_label.csv', 'w', newline='') as file:
             # Step 4: Using csv.writer to write the list to the CSV file
